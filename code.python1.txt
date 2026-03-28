@@ -1,0 +1,7 @@
+import numpy as np
+x = np.arange(0,3,0.01)
+y = x**2-3*x+2
+plt.figure(1)
+plt.plot(x,y,[1,2],[0,0],'ro',linewidth=2)
+plt.grid()
+plt.show()

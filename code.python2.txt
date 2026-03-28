@@ -1,0 +1,8 @@
+from scipy.optimize import bisect
+# Объявление функции с левой частью уравнения
+def my_fun(x):
+    return x**2-3*x+2
+# Вызов функций, решающих уравнение
+x1 = bisect(my_fun,0,1.5)
+x2 = bisect(my_fun,1.5,3)
+print(x1,x2)
