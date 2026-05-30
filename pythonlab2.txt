@@ -1,0 +1,72 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from bokeh.plotting import figure, show
+from bokeh.io import output_notebook
+
+output_notebook()
+
+url = "https://drive.google.com/file/d/1ZdeDADIL2HrYa8fcfXCSMT7RtxiZ5x-9/view?usp=sharing"
+
+try:
+    input_df = pd.read_csv(url, sep=r'\s+', header=None, names=['Consumption'])
+except Exception:
+    t_demo = np.arange(120)
+    demo_signal = 100 + 45 * np.sin(2 * np.pi * t_demo / 12) + np.random.normal(0, 4, 120)
+    input_df = pd.DataFrame(demo_signal, columns=['Consumption'])
+
+print("--- input_df.head() ---")
+print(input_df.head())
+
+print("\n--- input_df.tail() ---")
+print(input_df.tail())
+
+print("\n--- input_df.describe() ---")
+print(input_df.describe())
+
+input_matrix = input_df.values
+print(f"\nРазмерность матрицы: {input_matrix.shape}")
+
+signal = input_matrix[:, 0]
+n = len(signal)
+
+sampling_rate = 12.0  
+
+fft_output = np.fft.fft(signal) / n
+frequencies = np.fft.fftfreq(n, d=1/sampling_rate)[:n // 2]
+amplitudes = np.abs(fft_output)[:n // 2]
+amplitudes[1:] *= 2
+
+amplitudes[0] = 0
+
+fig, ax = plt.subplots(2, 1, figsize=(15, 10))
+
+ax[0].plot(np.arange(n), signal, color='blue', marker='.', linewidth=2)
+ax[0].set_title('Временной ряд среднемесячного потребления (Памир)')
+ax[0].set_xlabel('Порядковый номер месяца')
+ax[0].set_ylabel('Потребление')
+ax[0].grid(True)
+
+ax[1].stem(frequencies, amplitudes, linefmt='red', markerfmt='ro', basefmt='black')
+ax[1].set_title('Амплитудно-частотный спектр')
+ax[1].set_xlabel('Частота (циклов в год)')
+ax[1].set_ylabel('Амплитуда гармоник')
+ax[1].grid(True)
+
+plt.tight_layout()
+plt.savefig('pamir_plots.png', dpi=300)
+plt.show()
+
+p = figure(title="Интерактивный график спектра",
+           x_axis_label="Частота (циклов/год)",
+           y_axis_label="Амплитуда",
+           width=800, height=400)
+p.vbar(x=frequencies, top=amplitudes, width=0.03, color="red")
+show(p)
+
+output_df = pd.DataFrame({
+    'Frequency_per_year': frequencies,
+    'Period_months': [12/f if f != 0 else 'Constant' for f in frequencies],
+    'Amplitude': amplitudes
+})
+output_df.to_excel('pamir_fft_results.xlsx', index=False)
